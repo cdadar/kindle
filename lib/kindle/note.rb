@@ -13,17 +13,19 @@ module Kindle
 
     def self.from_kindle_format(raw_note)
       title_author, highlight, *notes = *raw_note.split("\r\n")
-      
+
       note = Note.new
       location = highlight.match(/loc. (\d*)/i)       # Kindle 2nd Gen
       location ||= highlight.match(/Location (\d*)/i) # Kindle 4th Gen (touch)
+      location ||= highlight.match(/\-\s您在位置\s#(\d*)/i)  # - 您在位置 #557-559的标注
+
       note.location = location[1].to_i if location
 
       # "Added on Wednesday, June 30, 2010, 10:35 PM"
-      added_at = highlight.match(/Added on (.*), (.*), (.*), (.*)/)
+      # "添加于 2020年1月18日星期六 下午8:45:07"
+      added_at = highlight.match(/添加于\s(.*)/)
       if added_at
-        date = "#{added_at[2]} #{added_at[3]} at #{added_at[4]}"
-        note.added = Chronic.parse(date)
+        note.added = added_at[1]
       end
       note.content = notes.join("\r\n")
       note
